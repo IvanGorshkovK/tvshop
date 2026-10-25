@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: tvshop-backend
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:tvshop}
+    username: ${POSTGRES_USER:tvshop}
+    password: ${POSTGRES_PASSWORD:tvshop}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    default-property-inclusion: non_null
+
+# JWT
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-me-tvshop-0123456789abcdef0123456789abcdef}
+    expiration-ms: 86400000
+
+# CORS (frontend dev server)
+app.cors.allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+
+# Uploads (загружаемые изображения)
+app.uploads.dir: ${UPLOADS_DIR:uploads}
+
+# Публичный адрес бэкенда (для деплоя). Пусто = картинки остаются относительными.
+app.base-url: ${BASE_URL:}
+
+# AI-генерация описаний (DeepSeek / OpenAI-совместимый API)
+app.ai:
+  api-key: ${DEEPSEEK_API_KEY:}
+  base-url: ${AI_BASE_URL:https://api.deepseek.com}
+  model: ${AI_MODEL:deepseek-chat}
+
+spring.servlet.multipart:
+  max-file-size: 20MB
+  max-request-size: 20MB
+
+logging:
+  level:
+    org.hibernate.SQL: warn

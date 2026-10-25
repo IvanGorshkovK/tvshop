@@ -1,0 +1,37 @@
+# Java
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Tools (downloaded JDK etc.)
+.tools/
+
+# Logs
+*.log
+
+# Local data & caches (не деплоить)
+uploads/
+.m2/
+.pnpm-store/
+.playwright-mcp/
+citilink-*.json
+technopark-*.json
+tvpro-*.json
+backend-log.txt
+скриншоты/
