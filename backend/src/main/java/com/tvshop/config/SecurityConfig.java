@@ -17,6 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final JwtAuthFilter jwtAuthFilter;
     private final CorsConfigurationSource corsConfigurationSource;
@@ -64,11 +68,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
             @Value("${app.cors.allowed-origins:http://localhost:5173}") String origins) {
+        log.info("CORS allowed origins = [{}]", origins);
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(Arrays.stream(origins.split(",")).map(String::trim).toList());
+        cfg.setAllowedOriginPatterns(Arrays.stream(origins.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);
+        cfg.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
