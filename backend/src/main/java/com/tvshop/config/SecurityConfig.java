@@ -1,7 +1,6 @@
 package com.tvshop.config;
 
 import com.tvshop.security.JwtAuthFilter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,7 +19,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -66,11 +64,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(
-            @Value("${app.cors.allowed-origins:http://localhost:5173}") String origins) {
-        log.info("CORS allowed origins = [{}]", origins);
+    public CorsConfigurationSource corsConfigurationSource() {
+        log.info("CORS: allowing all origins (demo mode)");
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(Arrays.stream(origins.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
+        cfg.setAllowedOriginPatterns(List.of("*"));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);
