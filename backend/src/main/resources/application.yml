@@ -5,9 +5,9 @@ spring:
   application:
     name: tvshop-backend
   datasource:
-    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:tvshop}
-    username: ${POSTGRES_USER:tvshop}
-    password: ${POSTGRES_PASSWORD:tvshop}
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:tvshop}
+    username: ${PGUSER:tvshop}
+    password: ${PGPASSWORD:tvshop}
   jpa:
     hibernate:
       ddl-auto: update
