@@ -1,0 +1,53 @@
+# Полный продакшн-стек: PostgreSQL + backend + frontend (Nginx).
+# Запуск на сервере:  docker compose -f docker-compose.prod.yml up -d --build
+# Перед запуском заполни переменные в файле .env (скопируй из .env.example)
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tvshop}
+      POSTGRES_USER: ${POSTGRES_USER:-tvshop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tvshop} -d ${POSTGRES_DB:-tvshop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-tvshop}
+      PGUSER: ${POSTGRES_USER:-tvshop}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      SITE_URL: ${SITE_URL:-}
+      BASE_URL: ${BASE_URL:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      UPLOADS_DIR: /app/uploads
+      SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      - uploads:/app/uploads
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
+  uploads:

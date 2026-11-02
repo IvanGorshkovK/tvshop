@@ -9,6 +9,7 @@ import com.tvshop.repository.CategoryRepository;
 import com.tvshop.repository.ProductRepository;
 import com.tvshop.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@Order(3)
 public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -48,8 +50,8 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
         User admin = new User();
-        admin.setEmail("admin@tvspace.ru");
-        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setEmail("admin@mail.ru");
+        admin.setPassword(passwordEncoder.encode("bGarq8X#"));
         admin.setFullName("Администратор");
         admin.setRole(Role.ADMIN);
         userRepository.save(admin);
@@ -67,7 +69,7 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
         categoryRepository.save(new Category("Телевизоры", "televizory", "📺"));
-        categoryRepository.save(new Category("Аудио системы", "audio-sistemy", "🔊"));
+        categoryRepository.save(new Category("Аудиосистемы", "audio-sistemy", "🔊"));
         categoryRepository.save(new Category("Проекторы", "proektory", "📽️"));
         categoryRepository.save(new Category("Кронштейны", "kronshteyny", "🔩"));
     }

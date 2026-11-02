@@ -2,34 +2,19 @@ import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { formatPrice } from '../utils/format.js'
+import EmptyState from '../components/EmptyState.jsx'
 
 export default function CartPage() {
   const { cart, updateQty, remove } = useCart()
   const { user } = useAuth()
 
-  if (!user) {
-    return (
-      <div className="empty">
-        <div className="empty__icon">🛒</div>
-        <p>
-          Войдите, чтобы использовать корзину.
-        </p>
-        <Link to="/login" className="btn btn-primary mt-16">
-          Войти
-        </Link>
-      </div>
-    )
-  }
-
   if (!cart.items.length) {
     return (
-      <div className="empty">
-        <div className="empty__icon">🛒</div>
-        <p>Ваша корзина пуста.</p>
-        <Link to="/catalog" className="btn btn-primary mt-16">
+      <EmptyState icon="🛒" title="Корзина пуста" text="Вы ещё ничего не добавили. Загляните в каталог — там много интересного!">
+        <Link to="/catalog" className="btn btn-primary">
           Перейти в каталог
         </Link>
-      </div>
+      </EmptyState>
     )
   }
 
@@ -85,9 +70,31 @@ export default function CartPage() {
         </div>
       </div>
 
-      <Link to="/checkout" className="btn btn-primary btn-lg">
-        Оформить заказ
-      </Link>
+      {!user && (
+        <div className="card" style={{ padding: 16, marginBottom: 16 }}>
+          <strong style={{ fontSize: 16 }}>Оформить заказ без регистрации?</strong>
+          <div className="text-muted" style={{ fontSize: 14, margin: '6px 0 12px' }}>
+            Можно оформить как гость — просто укажете имя, телефон и адрес на следующем шаге.
+          </div>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <Link to="/checkout" className="btn btn-primary btn-lg">
+              Да, оформить без регистрации
+            </Link>
+            <Link to="/login" className="btn btn-outline">
+              Войти
+            </Link>
+            <Link to="/register" className="btn btn-ghost">
+              Регистрация
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {user && (
+        <Link to="/checkout" className="btn btn-primary btn-lg">
+          Оформить заказ
+        </Link>
+      )}
     </div>
   )
 }

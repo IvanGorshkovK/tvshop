@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { SITE } from '../config.js'
+import { useSite } from '../context/SiteContext.jsx'
 
 export default function Footer() {
+  const { site } = useSite()
   return (
     <footer className="footer">
       <div className="container">
@@ -41,15 +42,27 @@ export default function Footer() {
           <div>
             <h4>Контакты</h4>
             <ul>
-              <li>г. {SITE.city}</li>
-              <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
-              <li><a href={'tel:' + SITE.phone.replace(/[^+\d]/g, '')}>{SITE.phone}</a></li>
+              <li>г. {site.city}</li>
+              <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+              <li><a href={'tel:' + site.phone.replace(/[^+\d]/g, '')}>{site.phone}</a></li>
+              {site.telegram && (
+                <li>
+                  <a href={`https://t.me/${site.telegram}`} target="_blank" rel="noreferrer">
+                    Telegram: @{site.telegram}
+                  </a>
+                </li>
+              )}
               <li>Ежедневно 9:00–21:00</li>
             </ul>
           </div>
         </div>
         <div className="footer__bottom">
-          © {new Date().getFullYear()} TV Space. Демонстрационный проект.
+          <p>Все права защищены © 2010 – 2026. Интернет-магазин электроники TV-Space.</p>
+          <p>
+            Сайт носит сугубо информационный характер и не является публичной офертой,
+            определяемой Статьей 437 (2) ГК РФ. Магазин оставляет за собой право отказать
+            в выполнении заказа.
+          </p>
         </div>
       </div>
     </footer>

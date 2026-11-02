@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -38,12 +39,18 @@ public class ProductController {
             @RequestParam(required = false) Integer powerOutputMax,
             @RequestParam(required = false) String resolution,
             @RequestParam(required = false) Integer luminousFluxMin,
-            @RequestParam(required = false) Integer luminousFluxMax) {
+            @RequestParam(required = false) Integer luminousFluxMax,
+            @RequestParam(required = false) String collection) {
         return productService.list(
                 category, q, sort, page, size, true,
                 brand, screenSize, technology, priceMin, priceMax,
                 channels, powerOutputMin, powerOutputMax,
-                resolution, luminousFluxMin, luminousFluxMax);
+                resolution, luminousFluxMin, luminousFluxMax, collection);
+    }
+
+    @GetMapping("/by-ids")
+    public List<ProductResponse> byIds(@RequestParam List<Long> ids) {
+        return productService.getByIds(ids);
     }
 
     @GetMapping("/{slug}")

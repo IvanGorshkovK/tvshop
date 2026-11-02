@@ -1,6 +1,7 @@
 package com.tvshop.controller;
 
 import com.tvshop.domain.User;
+import com.tvshop.dto.GuestOrderRequest;
 import com.tvshop.dto.OrderRequest;
 import com.tvshop.dto.OrderResponse;
 import com.tvshop.dto.QuickOrderRequest;
@@ -41,6 +42,11 @@ public class OrderController {
             user = userRepository.findByEmail(auth.getName()).orElse(null);
         }
         return orderService.quickOrder(user, req);
+    }
+
+    @PostMapping("/guest")
+    public OrderResponse guest(@Valid @RequestBody GuestOrderRequest req) {
+        return orderService.guestOrder(req);
     }
 
     @GetMapping

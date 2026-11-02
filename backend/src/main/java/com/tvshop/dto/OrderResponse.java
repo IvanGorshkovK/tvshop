@@ -15,6 +15,7 @@ public record OrderResponse(
         String email,
         String address,
         String comment,
+        String managerComment,
         LocalDateTime createdAt,
         List<OrderItemResponse> items
 ) {

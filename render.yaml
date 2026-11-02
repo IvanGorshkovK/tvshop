@@ -1,0 +1,44 @@
+# Render Blueprint: создаёт бэкенд (Docker) + PostgreSQL одним кликом.
+# Использование: render.com → New → Blueprint → подключи репозиторий.
+# После деплоя добавь CORS_ORIGINS / SITE_URL / BASE_URL вручную (зависят от URL фронтенда).
+
+databases:
+  - name: tvshop-db
+    plan: free
+
+services:
+  - type: web
+    name: tvshop-backend
+    runtime: docker
+    rootDir: backend
+    plan: free
+    envVars:
+      - key: PGHOST
+        fromDatabase:
+          name: tvshop-db
+          property: host
+      - key: PGPORT
+        fromDatabase:
+          name: tvshop-db
+          property: port
+      - key: PGDATABASE
+        fromDatabase:
+          name: tvshop-db
+          property: database
+      - key: PGUSER
+        fromDatabase:
+          name: tvshop-db
+          property: user
+      - key: PGPASSWORD
+        fromDatabase:
+          name: tvshop-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # Временный CORS (все источники) — поменяй на свой Netlify-URL после деплоя фронта
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: DEEPSEEK_API_KEY
+        sync: false

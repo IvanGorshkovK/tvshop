@@ -2,6 +2,7 @@ package com.tvshop.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -10,8 +11,19 @@ import java.nio.file.Path;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    private final RateLimitInterceptor rateLimitInterceptor;
+
+    public WebConfig(RateLimitInterceptor rateLimitInterceptor) {
+        this.rateLimitInterceptor = rateLimitInterceptor;
+    }
+
     @Value("${app.uploads.dir:uploads}")
     private String uploadDir;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(rateLimitInterceptor);
+    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

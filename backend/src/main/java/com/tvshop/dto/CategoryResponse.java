@@ -1,10 +1,14 @@
 package com.tvshop.dto;
 
+import java.util.List;
+
 public record CategoryResponse(
         Long id,
         String name,
         String slug,
         String icon,
-        long productCount
+        boolean hidden,
+        long productCount,
+        List<SubcategoryResponse> subcategories
 ) {
 }

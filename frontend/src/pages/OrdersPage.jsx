@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client.js'
 import { formatDate, formatPrice } from '../utils/format.js'
 import Spinner from '../components/Spinner.jsx'
+import EmptyState from '../components/EmptyState.jsx'
 
 const STATUS = {
   NEW: { label: 'Новый', cls: 'badge-primary' },
@@ -23,13 +24,11 @@ export default function OrdersPage() {
 
   if (!orders.length) {
     return (
-      <div className="empty">
-        <div className="empty__icon">📦</div>
-        <p>У вас пока нет заказов.</p>
-        <Link to="/catalog" className="btn btn-primary mt-16">
+      <EmptyState icon="📦" title="Заказов пока нет" text="Оформите первый заказ — и он появится здесь.">
+        <Link to="/catalog" className="btn btn-primary">
           Перейти в каталог
         </Link>
-      </div>
+      </EmptyState>
     )
   }
 

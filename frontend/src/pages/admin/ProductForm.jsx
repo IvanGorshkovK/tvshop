@@ -13,6 +13,15 @@ const RESOLUTIONS = [
 
 const TECHNOLOGIES = ['QLED', 'OLED', 'LED', 'NanoCell', 'Mini-LED', 'Лазерный', 'DLP']
 
+const SPEC_GROUPS = [
+  'Основные характеристики',
+  'Функции',
+  'Звук',
+  'Разъемы и интерфейсы',
+  'Прием сигнала',
+  'Габариты и вес',
+]
+
 const EMPTY = {
   name: '',
   categoryId: '',
@@ -51,6 +60,9 @@ export default function ProductForm() {
   const [error, setError] = useState('')
   const [savedMsg, setSavedMsg] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [parseUrl, setParseUrl] = useState('')
+  const [parsing, setParsing] = useState(false)
+  const [parseMsg, setParseMsg] = useState('')
 
   useEffect(() => {
     api.get('/admin/categories').then(setCategories).catch(() => {})
@@ -84,7 +96,7 @@ export default function ProductForm() {
           luminousFluxLm: p.luminousFluxLm ?? '',
           contrast: p.contrast || '',
           specifications: p.specifications
-            ? Object.entries(p.specifications).map(([name, value]) => ({ name, value }))
+            ? p.specifications.map((s) => ({ name: s.name, value: s.value, group: s.group || '' }))
             : [],
           images: p.images || [],
         })
@@ -121,7 +133,7 @@ export default function ProductForm() {
   }
 
   function addSpec() {
-    setForm((f) => ({ ...f, specifications: [...f.specifications, { name: '', value: '' }] }))
+    setForm((f) => ({ ...f, specifications: [...f.specifications, { name: '', value: '', group: '' }] }))
   }
   function updateSpec(i, field, value) {
     setForm((f) => {
@@ -162,6 +174,31 @@ export default function ProductForm() {
     }
   }
 
+  async function onParse() {
+    if (!parseUrl.trim()) {
+      setParseMsg('Вставьте ссылку на товар.')
+      return
+    }
+    setParsing(true)
+    setParseMsg('')
+    setError('')
+    try {
+      const res = await api.post('/admin/parse', { url: parseUrl.trim() })
+      setForm((f) => ({
+        ...f,
+        name: res.name || f.name,
+        price: res.price ?? f.price,
+        brand: res.brand || f.brand,
+        specifications: (res.specs || []).map((s) => ({ name: s.name, value: s.value, group: s.group || '' })),
+      }))
+      setParseMsg(`✅ Найдено: ${res.name ? res.name.slice(0, 60) : '—'} · характеристик: ${(res.specs || []).length}`)
+    } catch (e) {
+      setParseMsg('❌ ' + e.message)
+    } finally {
+      setParsing(false)
+    }
+  }
+
   async function onSubmit(e) {
     e.preventDefault()
     setError('')
@@ -190,7 +227,7 @@ export default function ProductForm() {
       contrast: form.contrast || null,
       specifications: form.specifications
         .filter((s) => s.name.trim() !== '')
-        .map((s) => ({ name: s.name.trim(), value: s.value })),
+        .map((s) => ({ name: s.name.trim(), value: s.value, group: s.group || null })),
       images: form.images,
     }
     try {
@@ -218,6 +255,29 @@ export default function ProductForm() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <form className="card" style={{ padding: 24 }} onSubmit={onSubmit}>
+        <div className="card" style={{ padding: 14, marginBottom: 16, borderColor: 'var(--primary)', background: 'var(--bg)' }}>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input
+              className="input"
+              style={{ flex: 1, minWidth: 240 }}
+              placeholder="🔗 Вставьте ссылку на товар из другого магазина…"
+              value={parseUrl}
+              onChange={(e) => setParseUrl(e.target.value)}
+            />
+            <button type="button" className="btn btn-primary" onClick={onParse} disabled={parsing}>
+              {parsing ? 'Загружаем…' : 'Загрузить по ссылке'}
+            </button>
+          </div>
+          {parseMsg && (
+            <div className="text-muted mt-8" style={{ fontSize: 13 }}>
+              {parseMsg}
+            </div>
+          )}
+          <div className="text-muted mt-8" style={{ fontSize: 12 }}>
+            Система скачает страницу и подставит название, цену и характеристики. Проверьте их перед сохранением.
+          </div>
+        </div>
+
         <div className="field">
           <label>Название *</label>
           <input className="input" required value={form.name} onChange={(e) => set('name', e.target.value)} />
@@ -248,7 +308,7 @@ export default function ProductForm() {
           </div>
           <div className="field">
             <label>Старая цена, ₽</label>
-            <input className="input" type="number" min="0" step="0.01" value={form.oldPrice} onChange={(e) => set('oldPrice', e.target.value)} />
+            <input className="input" type="number" min="1" step="0.01" value={form.oldPrice} onChange={(e) => set('oldPrice', e.target.value)} />
           </div>
         </div>
 
@@ -386,24 +446,43 @@ export default function ProductForm() {
         </div>
 
         <div className="field">
-          <label>Характеристики</label>
+          <label>Характеристики (с блоками)</label>
           {form.specifications.map((spec, i) => (
-            <div className="row" key={i} style={{ gap: 8, marginBottom: 8 }}>
-              <input
-                className="input"
-                placeholder="Название (напр. Процессор)"
-                value={spec.name}
-                onChange={(e) => updateSpec(i, 'name', e.target.value)}
-              />
-              <input
-                className="input"
-                placeholder="Значение"
-                value={spec.value}
-                onChange={(e) => updateSpec(i, 'value', e.target.value)}
-              />
-              <button type="button" className="btn btn-danger btn-sm" onClick={() => removeSpec(i)}>
-                ✕
-              </button>
+            <div className="card" key={i} style={{ padding: 10, marginBottom: 8, background: 'var(--bg)' }}>
+              <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                <input
+                  className="input"
+                  style={{ flex: 1, minWidth: 180 }}
+                  placeholder="Название (напр. Процессор)"
+                  value={spec.name}
+                  onChange={(e) => updateSpec(i, 'name', e.target.value)}
+                />
+                <input
+                  className="input"
+                  style={{ flex: 1, minWidth: 180 }}
+                  placeholder="Значение"
+                  value={spec.value}
+                  onChange={(e) => updateSpec(i, 'value', e.target.value)}
+                />
+              </div>
+              <div className="row" style={{ gap: 8, marginTop: 8, alignItems: 'center' }}>
+                <select
+                  className="select"
+                  style={{ width: 'auto', flex: 1 }}
+                  value={spec.group || ''}
+                  onChange={(e) => updateSpec(i, 'group', e.target.value)}
+                >
+                  <option value="">Блок: определить автоматически</option>
+                  {SPEC_GROUPS.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => removeSpec(i)}>
+                  ✕
+                </button>
+              </div>
             </div>
           ))}
           <button type="button" className="btn btn-outline btn-sm" onClick={addSpec}>

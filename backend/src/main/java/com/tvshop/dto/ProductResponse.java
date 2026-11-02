@@ -3,12 +3,12 @@ package com.tvshop.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 public record ProductResponse(
         Long id,
         String name,
         String slug,
+        String code,
         String description,
         BigDecimal price,
         BigDecimal oldPrice,
@@ -31,7 +31,7 @@ public record ProductResponse(
         String categoryName,
         String categorySlug,
         LocalDateTime createdAt,
-        Map<String, String> specifications,
+        List<SpecEntryResponse> specifications,
         List<String> images
 ) {
 }

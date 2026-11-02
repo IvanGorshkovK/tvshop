@@ -6,6 +6,10 @@ import { useCart } from '../context/CartContext.jsx'
 import { formatPrice } from '../utils/format.js'
 import { productSpecs } from '../utils/specs.js'
 import Spinner from '../components/Spinner.jsx'
+import ProductCard from '../components/ProductCard.jsx'
+import { useToast } from '../context/ToastContext.jsx'
+import { isCompared, toggleCompare } from '../utils/compare.js'
+import usePageMeta from '../hooks/usePageMeta.js'
 
 function readList(key) {
   try {
@@ -27,11 +31,14 @@ function groupSpecs(specs) {
   const groups = new Map()
   const DEFAULT = 'Основные характеристики'
   for (const s of specs) {
-    let title = DEFAULT
-    for (const r of GROUP_RULES) {
-      if (r.re.test(s.label)) {
-        title = r.title
-        break
+    let title = s.group || null
+    if (!title) {
+      title = DEFAULT
+      for (const r of GROUP_RULES) {
+        if (r.re.test(s.label)) {
+          title = r.title
+          break
+        }
       }
     }
     if (!groups.has(title)) groups.set(title, [])
@@ -50,8 +57,15 @@ export default function ProductPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { add } = useCart()
+  const { show } = useToast()
   const [product, setProduct] = useState(null)
+  const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
+
+  usePageMeta(
+    product ? product.name : 'Товар',
+    product?.description ? product.description.slice(0, 160) : '',
+  )
   const [qty, setQty] = useState(1)
   const [error, setError] = useState('')
   const [adding, setAdding] = useState(false)
@@ -75,7 +89,15 @@ export default function ProductPage() {
   useEffect(() => {
     if (!product) return
     setFav(readList('fav').includes(product.id))
-    setCmp(readList('cmp').includes(product.id))
+    setCmp(isCompared(product.id))
+  }, [product])
+
+  useEffect(() => {
+    if (!product) return
+    api
+      .get(`/products?category=${product.categorySlug}&size=6`)
+      .then((r) => setRelated((r.items || []).filter((p) => p.id !== product.id).slice(0, 4)))
+      .catch(() => setRelated([]))
   }, [product])
 
   useEffect(() => {
@@ -103,15 +125,17 @@ export default function ProductPage() {
   }
 
   async function onAdd() {
-    if (!user) {
-      navigate('/login', { state: { from: `/product/${slug}` } })
-      return
-    }
     setAdding(true)
     setError('')
     try {
-      await add(product.id, qty)
-      navigate('/cart')
+      await add(product.id, qty, {
+        name: product.name,
+        slug: product.slug,
+        imageUrl: product.imageUrl,
+        price: product.price,
+        stock: product.stock,
+      })
+      show('Товар добавлен в корзину 🛒')
     } catch (e) {
       setError(e.message)
     } finally {
@@ -165,8 +189,8 @@ export default function ProductPage() {
         ? [product.imageUrl]
         : []
   const specs =
-    product.specifications && Object.keys(product.specifications).length > 0
-      ? Object.entries(product.specifications).map(([label, value]) => ({ label, value }))
+    product.specifications && product.specifications.length > 0
+      ? product.specifications.map((s) => ({ label: s.name, value: s.value, group: s.group }))
       : productSpecs(product)
   const keySpecs = specs.slice(0, 5)
   const groupedSpecs = groupSpecs(specs)
@@ -261,7 +285,7 @@ export default function ProductPage() {
           </div>
 
           <div className="row mt-16" style={{ gap: 8 }}>
-            <button className={'btn btn-outline btn-sm' + (cmp ? ' is-active' : '')} onClick={() => setCmp(toggleList('cmp', product.id))}>
+            <button className={'btn btn-outline btn-sm' + (cmp ? ' is-active' : '')} onClick={() => setCmp(toggleCompare(product.id))}>
               ⇄ {cmp ? 'В сравнении' : 'Сравнить'}
             </button>
             <button className={'btn btn-outline btn-sm' + (fav ? ' is-active' : '')} onClick={() => setFav(toggleList('fav', product.id))}>
@@ -305,7 +329,6 @@ export default function ProductPage() {
           <div className="delivery-info mt-16">
             <div className="delivery-info__title">Доставка и оплата</div>
             <div className="delivery-info__row">🚚 Доставка по Москве и МО</div>
-            <div className="delivery-info__row">🏬 Самовывоз — бесплатно</div>
             <div className="delivery-info__row">💵 Оплата наличными при получении</div>
             <Link to="/delivery" className="delivery-info__link">
               Подробнее о доставке →
@@ -345,6 +368,19 @@ export default function ProductPage() {
                   ))}
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {related.length > 0 && (
+        <section className="mt-24">
+          <div className="section-title">
+            <h2>Похожие товары</h2>
+          </div>
+          <div className="grid">
+            {related.map((p) => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </section>

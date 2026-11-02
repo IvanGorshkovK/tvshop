@@ -15,6 +15,7 @@ export default function CheckoutPage() {
     phone: '',
     address: '',
     comment: '',
+    consent: false,
   })
   const [error, setError] = useState('')
   const [placing, setPlacing] = useState(false)
@@ -27,9 +28,18 @@ export default function CheckoutPage() {
   async function onSubmit(e) {
     e.preventDefault()
     setError('')
+    if (!form.consent) {
+      setError('Подтвердите согласие на обработку персональных данных')
+      return
+    }
     setPlacing(true)
     try {
-      const order = await api.post('/orders', form)
+      const order = user
+        ? await api.post('/orders', form)
+        : await api.post('/orders/guest', {
+            items: cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+            ...form,
+          })
       clear()
       setPlaced(order)
     } catch (err) {
@@ -46,9 +56,15 @@ export default function CheckoutPage() {
         <h2>Заказ №{placed.id} оформлен!</h2>
         <p>Сумма заказа: {formatPrice(placed.total)}. Наш менеджер свяжется с вами для подтверждения.</p>
         <div className="row mt-16" style={{ justifyContent: 'center' }}>
-          <button className="btn btn-primary" onClick={() => navigate('/orders')}>
-            Мои заказы
-          </button>
+          {user ? (
+            <button className="btn btn-primary" onClick={() => navigate('/orders')}>
+              Мои заказы
+            </button>
+          ) : (
+            <Link to="/" className="btn btn-primary">
+              На главную
+            </Link>
+          )}
           <Link to="/catalog" className="btn btn-outline">
             Продолжить покупки
           </Link>
@@ -72,6 +88,23 @@ export default function CheckoutPage() {
   return (
     <div className="mt-24" style={{ maxWidth: 760 }}>
       <h1>Оформление заказа</h1>
+
+      {!user && (
+        <div className="card" style={{ padding: 14, marginBottom: 16, borderColor: 'var(--warning)' }}>
+          <span style={{ fontWeight: 600 }}>👤 Оформление без регистрации.</span>{' '}
+          <span className="text-muted">
+            Укажите контакты ниже — или{' '}
+            <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+              войдите
+            </Link>{' '}
+            /{' '}
+            <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+              зарегистрируйтесь
+            </Link>
+            .
+          </span>
+        </div>
+      )}
 
       <div className="card mb-16" style={{ padding: 16 }}>
         <h3 className="mt-0 mb-16">Ваш заказ</h3>
@@ -115,6 +148,21 @@ export default function CheckoutPage() {
 
         <div className="alert alert-success" style={{ background: '#eff6ff', color: '#1d4ed8' }}>
           💳 Демо-оплата: реальные деньги не списываются. Заказ будет создан сразу после подтверждения.
+        </div>
+
+        <div className="row" style={{ gap: 8, fontSize: 14, margin: '12px 0', alignItems: 'flex-start' }}>
+          <input
+            type="checkbox"
+            style={{ marginTop: 3 }}
+            checked={form.consent}
+            onChange={(e) => setForm((f) => ({ ...f, consent: e.target.checked }))}
+          />
+          <span>
+            Я согласен на{' '}
+            <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+              обработку персональных данных
+            </a>
+          </span>
         </div>
 
         <button className="btn btn-primary btn-lg btn-block" type="submit" disabled={placing}>

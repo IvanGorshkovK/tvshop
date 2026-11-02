@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client.js'
 import { MAIN_SECTIONS } from '../config.js'
 import ProductCard from '../components/ProductCard.jsx'
-import Spinner from '../components/Spinner.jsx'
+import { SkeletonGrid } from '../components/Skeleton.jsx'
+import PromoSlider from '../components/PromoSlider.jsx'
+import usePageMeta from '../hooks/usePageMeta.js'
+import { useSite } from '../context/SiteContext.jsx'
 
 const BRANDS = [
   { name: 'Samsung', logo: '/brands/samsung.svg' },
@@ -20,11 +23,15 @@ const BENEFITS = [
   { icon: '💳', title: 'Оплата при получении', text: 'Проверьте товар до оплаты' },
 ]
 
-const HERO_IMAGE = 'https://avatars.mds.yandex.net/i?id=9ea03a630ed2f54dfc288ed75a21e7a1_l-16971973-images-thumbs&n=13'
-
 export default function Home() {
+  const { site } = useSite()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+
+  usePageMeta(
+    'TV Space — телевизоры, аудио и проекторы',
+    'Интернет-магазин телевизоров, саундбаров и проекторов премиум-класса с доставкой и установкой.',
+  )
 
   useEffect(() => {
     api
@@ -41,14 +48,11 @@ export default function Home() {
     <div>
       {/* Hero */}
       <section className="hero">
-        <img className="hero__bg" src={HERO_IMAGE} alt="" />
+        <img className="hero__bg" src={site.heroImage} alt="" />
         <span className="hero__overlay" />
         <div className="hero__content">
-          <h1>Кино и звук, ради которых стоит остаться дома</h1>
-          <p>
-            Телевизоры, саундбары и проекторы премиум-класса с доставкой, подбором
-            диагонали под комнату и установкой прямо у вас дома.
-          </p>
+          <h1>{site.heroTitle}</h1>
+          <p>{site.heroSubtitle}</p>
           <div className="hero__badges">
             <span>Официальная гарантия</span>
             <span>Доставка и установка</span>
@@ -65,6 +69,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Слайдер акций */}
+      <PromoSlider />
+
       {/* Преимущества */}
       <section className="benefits">
         {BENEFITS.map((b) => (
@@ -80,10 +87,10 @@ export default function Home() {
 
       {/* Три крупных раздела */}
       <section className="main-sections">
-        {MAIN_SECTIONS.map((s) => (
+        {MAIN_SECTIONS.filter((s) => !s.navOnly).map((s) => (
           <Link
             key={s.slug}
-            to={`/catalog?category=${s.slug}`}
+            to={s.href || `/catalog?category=${s.slug}`}
             className={`main-section main-section--${s.accent} reveal`}
           >
             {s.image && <img className="main-section__bg" src={s.image} alt={s.title} loading="lazy" />}
@@ -136,7 +143,7 @@ export default function Home() {
           </Link>
         </div>
         {loading ? (
-          <Spinner />
+          <SkeletonGrid count={8} />
         ) : (
           <div className="grid">
             {popular.map((p) => (

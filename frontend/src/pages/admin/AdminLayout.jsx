@@ -1,9 +1,20 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { api } from '../../api/client.js'
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [newOrders, setNewOrders] = useState(0)
+
+  useEffect(() => {
+    api
+      .get('/admin/stats')
+      .then((s) => setNewOrders(s.newOrders || 0))
+      .catch(() => {})
+  }, [location.pathname])
 
   const linkClass = ({ isActive }) => 'nav-link' + (isActive ? ' active' : '')
 
@@ -42,9 +53,25 @@ export default function AdminLayout() {
           </NavLink>
           <NavLink to="/admin/orders" className={linkClass}>
             🧾 Заказы
+            {newOrders > 0 && <span className="nav-badge">{newOrders}</span>}
+          </NavLink>
+          <NavLink to="/admin/counterparties" className={linkClass}>
+            👥 Контрагенты
+          </NavLink>
+          <NavLink to="/admin/users" className={linkClass}>
+            👤 Пользователи
           </NavLink>
           <NavLink to="/admin/categories" className={linkClass}>
             🗂 Категории
+          </NavLink>
+          <NavLink to="/admin/audit" className={linkClass}>
+            📋 Журнал
+          </NavLink>
+          <NavLink to="/admin/site" className={linkClass}>
+            🌐 Сайт
+          </NavLink>
+          <NavLink to="/admin/filters" className={linkClass}>
+            ⚙️ Фильтры
           </NavLink>
         </aside>
         <div>

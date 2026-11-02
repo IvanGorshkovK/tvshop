@@ -41,6 +41,12 @@ export default function LoginPage() {
             <label>Пароль</label>
             <input className="input" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
+          <div className="row between" style={{ marginBottom: 12 }}>
+            <span />
+            <Link to="/forgot-password" style={{ color: 'var(--primary)', fontSize: 14, fontWeight: 600 }}>
+              Забыли пароль?
+            </Link>
+          </div>
           <button className="btn btn-primary btn-block btn-lg" disabled={loading}>
             {loading ? 'Входим…' : 'Войти'}
           </button>
@@ -51,13 +57,6 @@ export default function LoginPage() {
             Зарегистрироваться
           </Link>
         </p>
-        <div className="alert" style={{ background: '#f8fafc', border: '1px solid var(--border)' }}>
-          <strong>Демо-доступы:</strong>
-          <br />
-          Админ: <code>admin@tvspace.ru</code> / <code>admin123</code>
-          <br />
-          Покупатель: <code>customer@tvspace.ru</code> / <code>customer123</code>
-        </div>
       </div>
     </div>
   )

@@ -1,0 +1,10 @@
+# Производственный профиль: активируется через SPRING_PROFILES_ACTIVE=prod
+server:
+  # Учитывать X-Forwarded-* заголовки (за reverse-proxy Nginx/Caddy)
+  forward-headers-strategy: framework
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: off
+    org.hibernate.type.descriptor.sql: off

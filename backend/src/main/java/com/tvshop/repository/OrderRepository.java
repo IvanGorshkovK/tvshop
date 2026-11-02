@@ -14,6 +14,12 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     List<Order> findByUserOrderByCreatedAtDesc(User user);
 
-    @Query("select coalesce(sum(o.total), 0) from Order o where o.status <> :status")
+    List<Order> findByUser_IdOrderByCreatedAtDesc(Long userId);
+
+    @Query("select coalesce(sum(o.total), 0) from Order o where o.status <> :status and o.deleted = false")
     BigDecimal sumRevenueExcluding(@Param("status") OrderStatus status);
+
+    long countByStatusAndDeletedFalse(OrderStatus status);
+
+    long countByDeletedFalse();
 }

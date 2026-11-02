@@ -55,6 +55,19 @@ export const MAIN_SECTIONS = [
       { title: 'Full HD', q: 'category=proektory&resolution=Full%20HD' },
     ],
   },
+  {
+    title: 'Подборки',
+    slug: 'podborki',
+    icon: '✨',
+    desc: 'Готовые подборки телевизоров',
+    accent: 'collections',
+    navOnly: true,
+    href: '/catalog?category=televizory&collection=interior',
+    subcategories: [
+      { title: 'Интерьерные телевизоры', q: 'category=televizory&collection=interior' },
+      { title: 'Телевизоры с разрешением 8K UHD', q: 'category=televizory&collection=8k' },
+    ],
+  },
 ]
 
 // Фильтры каталога по категориям.
@@ -65,6 +78,7 @@ export const FILTER_CONFIG = {
     { key: 'price', label: 'Цена, ₽', type: 'range' },
     { key: 'screenSize', label: 'Диагональ', type: 'checkbox', options: ['32', '43', '50', '55', '65', '75', '85', '100'] },
     { key: 'technology', label: 'Тип технологии', type: 'checkbox', options: ['QLED', 'OLED', 'LED', 'NanoCell', 'Mini-LED'] },
+    { key: 'resolution', label: 'Разрешение экрана', type: 'checkbox', options: ['HD', 'Full HD', '4K UHD', '8K'] },
   ],
   'audio-sistemy': [
     { key: 'brand', label: 'Производитель', type: 'checkbox', options: ['Samsung', 'LG', 'Hisense'] },

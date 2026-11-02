@@ -13,7 +13,7 @@ public record ProductRequest(
         String slug,
         String description,
         @NotNull @Positive BigDecimal price,
-        BigDecimal oldPrice,
+        @Positive BigDecimal oldPrice,
         String imageUrl,
         String brand,
         Integer screenSizeInches,

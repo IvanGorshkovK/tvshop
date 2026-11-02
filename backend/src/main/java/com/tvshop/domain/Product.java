@@ -28,6 +28,9 @@ public class Product {
     @Column(nullable = false, unique = true, length = 200)
     private String slug;
 
+    @Column(unique = true, length = 6)
+    private String code;
+
     @Column(length = 5000)
     private String description;
 

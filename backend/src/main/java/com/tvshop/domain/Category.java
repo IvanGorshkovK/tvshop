@@ -27,6 +27,9 @@ public class Category {
 
     private String icon;
 
+    @Column(nullable = false)
+    private boolean hidden = false;
+
     @OneToMany(mappedBy = "category")
     private List<Product> products = new ArrayList<>();
 

@@ -1,15 +1,24 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Header from './Header.jsx'
 import Footer from './Footer.jsx'
 
 export default function Layout() {
   const { pathname } = useLocation()
+  const [showTop, setShowTop] = useState(false)
 
   // Прокрутка вверх при смене страницы
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
+
+  // Показывать кнопку «наверх» после прокрутки
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 400)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Плавное появление блоков при прокрутке
   useEffect(() => {
@@ -47,6 +56,12 @@ export default function Layout() {
         </div>
       </main>
       <Footer />
+
+      {showTop && (
+        <button className="to-top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} title="Наверх">
+          ↑
+        </button>
+      )}
     </div>
   )
 }

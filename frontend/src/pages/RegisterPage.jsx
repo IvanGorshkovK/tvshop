@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ fullName: '', email: '', password: '' })
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', consent: false })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -16,6 +16,10 @@ export default function RegisterPage() {
   async function onSubmit(e) {
     e.preventDefault()
     setError('')
+    if (!form.consent) {
+      setError('Подтвердите согласие на обработку персональных данных')
+      return
+    }
     setLoading(true)
     try {
       await register(form.fullName, form.email, form.password)
@@ -44,6 +48,20 @@ export default function RegisterPage() {
           <div className="field">
             <label>Пароль * (мин. 6 символов)</label>
             <input className="input" type="password" required minLength={6} value={form.password} onChange={set('password')} />
+          </div>
+          <div className="row" style={{ gap: 8, fontSize: 14, margin: '12px 0', alignItems: 'flex-start' }}>
+            <input
+              type="checkbox"
+              style={{ marginTop: 3 }}
+              checked={form.consent}
+              onChange={(e) => setForm((f) => ({ ...f, consent: e.target.checked }))}
+            />
+            <span>
+              Я согласен на{' '}
+              <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+                обработку персональных данных
+              </a>
+            </span>
           </div>
           <button className="btn btn-primary btn-block btn-lg" disabled={loading}>
             {loading ? 'Создаём…' : 'Создать аккаунт'}

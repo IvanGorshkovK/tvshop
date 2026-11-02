@@ -1,0 +1,19 @@
+# Тестовый профиль: H2 в памяти, без Flyway (схема создаётся Hibernate)
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ''
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  flyway:
+    enabled: false
+
+app:
+  jwt:
+    secret: test-secret-0123456789abcdef0123456789abcdef
+  ai:
+    api-key: ''

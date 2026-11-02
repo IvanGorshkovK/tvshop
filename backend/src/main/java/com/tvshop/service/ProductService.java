@@ -7,10 +7,13 @@ import com.tvshop.dto.PageResponse;
 import com.tvshop.dto.ProductRequest;
 import com.tvshop.dto.ProductResponse;
 import com.tvshop.dto.SpecEntryRequest;
+import com.tvshop.dto.SpecEntryResponse;
 import com.tvshop.exception.NotFoundException;
 import com.tvshop.repository.CategoryRepository;
 import com.tvshop.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -21,10 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class ProductService {
@@ -47,12 +50,14 @@ public class ProductService {
             String brand, String screenSize, String technology,
             BigDecimal priceMin, BigDecimal priceMax,
             String channels, Integer powerOutputMin, Integer powerOutputMax,
-            String resolution, Integer luminousFluxMin, Integer luminousFluxMax) {
+            String resolution, Integer luminousFluxMin, Integer luminousFluxMax,
+            String collection) {
 
         Specification<Product> spec = Specification.where(null);
 
         if (activeOnly) {
             spec = spec.and((root, cq, cb) -> cb.equal(root.get("active"), true));
+            spec = spec.and((root, cq, cb) -> cb.equal(root.get("category").get("hidden"), false));
         }
         if (categorySlug != null && !categorySlug.isBlank()) {
             spec = spec.and((root, cq, cb) -> cb.equal(root.get("category").get("slug"), categorySlug));
@@ -62,7 +67,8 @@ public class ProductService {
             spec = spec.and((root, cq, cb) -> cb.or(
                     cb.like(cb.lower(root.get("name")), q),
                     cb.like(cb.lower(cb.coalesce(root.get("brand"), "")), q),
-                    cb.like(cb.lower(cb.coalesce(root.get("description"), "")), q)
+                    cb.like(cb.lower(cb.coalesce(root.get("description"), "")), q),
+                    cb.like(cb.lower(cb.coalesce(root.get("code"), "")), q)
             ));
         }
         if (brand != null && !brand.isBlank()) {
@@ -76,6 +82,19 @@ public class ProductService {
         }
         if (resolution != null && !resolution.isBlank()) {
             spec = spec.and(inStrings("resolution", resolution));
+        }
+        if (collection != null && !collection.isBlank()) {
+            String c = collection.trim().toLowerCase();
+            if ("interior".equals(c)) {
+                // Интерьерные ТВ: Samsung The Frame (LS03), LG G6, Hisense S7S
+                spec = spec.and((root, cq, cb) -> cb.or(
+                        cb.like(cb.lower(root.get("name")), "%ls03%"),
+                        cb.like(cb.lower(root.get("name")), "%s7s%"),
+                        cb.like(cb.lower(root.get("name")), "%g6%")
+                ));
+            } else if ("8k".equals(c)) {
+                spec = spec.and((root, cq, cb) -> cb.like(cb.lower(cb.coalesce(root.get("resolution"), "")), "%8k%"));
+            }
         }
         if (screenSize != null && !screenSize.isBlank()) {
             List<Integer> sizes = Arrays.stream(screenSize.split(","))
@@ -136,9 +155,13 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "products", key = "#slug")
     public ProductResponse getBySlug(String slug) {
         Product p = productRepository.findBySlug(slug)
                 .orElseThrow(() -> new NotFoundException("Товар не найден"));
+        if (p.getCategory().isHidden()) {
+            throw new NotFoundException("Товар не найден");
+        }
         return toResponse(p);
     }
 
@@ -153,15 +176,25 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Товар не найден"));
     }
 
+    @Transactional(readOnly = true)
+    @Cacheable(value = "products", key = "#ids.toString()")
+    public List<ProductResponse> getByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return productRepository.findAllById(ids).stream().map(this::toResponse).toList();
+    }
+
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse create(ProductRequest req) {
         Product p = new Product();
         applyRequest(p, req, null);
+        ensureCode(p);
         productRepository.save(p);
         return toResponse(p);
     }
 
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse update(Long id, ProductRequest req) {
         Product p = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Товар не найден"));
@@ -171,6 +204,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void delete(Long id) {
         if (!productRepository.existsById(id)) {
             throw new NotFoundException("Товар не найден");
@@ -179,11 +213,82 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse toggleActive(Long id, boolean active) {
         Product p = getEntity(id);
         p.setActive(active);
         productRepository.save(p);
         return toResponse(p);
+    }
+
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
+    public ProductResponse updatePrice(Long id, BigDecimal price) {
+        Product p = getEntity(id);
+        p.setPrice(price);
+        productRepository.save(p);
+        return toResponse(p);
+    }
+
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
+    public void batch(List<Long> ids, String action) {
+        if (ids == null || ids.isEmpty()) return;
+        if ("delete".equals(action)) {
+            productRepository.deleteAllById(ids);
+            return;
+        }
+        boolean active = "show".equals(action);
+        List<Product> products = productRepository.findAllById(ids);
+        for (Product p : products) {
+            p.setActive(active);
+        }
+        productRepository.saveAll(products);
+    }
+
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
+    public int importCsv(String csv) {
+        int count = 0;
+        if (csv == null || csv.isBlank()) return 0;
+        String[] lines = csv.split("\\r?\\n");
+        for (String line : lines) {
+            String[] cols = line.split(";");
+            if (cols.length < 2) continue;
+            String name = cols[0].trim();
+            if (name.isEmpty()) continue;
+            BigDecimal price;
+            try {
+                price = new BigDecimal(cols[1].trim());
+            } catch (Exception e) {
+                continue;
+            }
+            String brand = cols.length > 2 ? cols[2].trim() : null;
+            String catSlug = cols.length > 3 && !cols[3].isBlank() ? cols[3].trim() : "televizory";
+            int stock = 30;
+            if (cols.length > 4) {
+                try {
+                    stock = Integer.parseInt(cols[4].trim());
+                } catch (Exception ignored) {
+                }
+            }
+            Category category = categoryRepository.findBySlug(catSlug).orElse(null);
+            if (category == null) continue;
+
+            Product p = new Product();
+            p.setName(name);
+            p.setSlug(uniqueSlug(slugify(name), null));
+            p.setPrice(price);
+            p.setBrand(brand != null && !brand.isBlank() ? brand : null);
+            p.setStock(stock);
+            p.setActive(true);
+            p.setCategory(category);
+            p.setSmartTv(false);
+            ensureCode(p);
+            productRepository.save(p);
+            count++;
+        }
+        return count;
     }
 
     private void applyRequest(Product p, ProductRequest req, Long excludeId) {
@@ -216,7 +321,7 @@ public class ProductService {
             List<SpecEntry> specs = new ArrayList<>();
             for (SpecEntryRequest s : req.specifications()) {
                 if (s.name() != null && !s.name().isBlank()) {
-                    specs.add(new SpecEntry(s.name(), s.value() != null ? s.value() : ""));
+                    specs.add(new SpecEntry(s.name(), s.value() != null ? s.value() : "", s.group()));
                 }
             }
             p.setSpecifications(specs);
@@ -283,13 +388,28 @@ public class ProductService {
         return b + u;
     }
 
-    private ProductResponse toResponse(Product p) {
-        Map<String, String> specs = new LinkedHashMap<>();
-        if (p.getSpecifications() != null) {
-            for (SpecEntry e : p.getSpecifications()) {
-                specs.put(e.getName(), e.getValue());
+    public String generateCode() {
+        for (int i = 0; i < 200; i++) {
+            String code = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
+            if (!productRepository.existsByCode(code)) {
+                return code;
             }
         }
+        throw new IllegalStateException("Не удалось сгенерировать уникальный код товара");
+    }
+
+    private void ensureCode(Product p) {
+        if (p.getCode() == null || p.getCode().isBlank()) {
+            p.setCode(generateCode());
+        }
+    }
+
+    private ProductResponse toResponse(Product p) {
+        List<SpecEntryResponse> specs = (p.getSpecifications() != null)
+                ? p.getSpecifications().stream()
+                        .map(e -> new SpecEntryResponse(e.getName(), e.getValue(), e.getGroup()))
+                        .toList()
+                : List.of();
         List<String> images = (p.getImages() != null && !p.getImages().isEmpty())
                 ? p.getImages().stream().map(this::resolveUrl).toList()
                 : (p.getImageUrl() != null && !p.getImageUrl().isBlank())
@@ -299,6 +419,7 @@ public class ProductService {
                 p.getId(),
                 p.getName(),
                 p.getSlug(),
+                p.getCode(),
                 p.getDescription(),
                 p.getPrice(),
                 p.getOldPrice(),

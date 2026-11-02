@@ -30,6 +30,9 @@ public class Order {
     @Column(nullable = false, length = 20)
     private OrderStatus status = OrderStatus.NEW;
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
@@ -47,6 +50,9 @@ public class Order {
 
     @Column(length = 500)
     private String comment;
+
+    @Column(length = 500)
+    private String managerComment;
 
     @CreationTimestamp
     @Column(updatable = false)
