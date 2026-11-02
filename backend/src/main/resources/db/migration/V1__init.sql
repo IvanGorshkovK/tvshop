@@ -34,7 +34,7 @@ create table if not exists products (
     refresh_rate_hz integer,
     hdr varchar(100),
     os varchar(100),
-    power_output_w integer,
+    power_outputw integer,
     channels varchar(30),
     luminous_flux_lm integer,
     contrast varchar(50),
