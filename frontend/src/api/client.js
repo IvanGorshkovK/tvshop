@@ -1,15 +1,8 @@
 const BASE = import.meta.env.VITE_API_URL || '/api'
 
-function getToken() {
-  return localStorage.getItem('token')
-}
-
 async function request(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) }
-  const token = getToken()
-  if (token) headers.Authorization = `Bearer ${token}`
-
-  const res = await fetch(`${BASE}${path}`, { ...options, headers })
+  const res = await fetch(`${BASE}${path}`, { ...options, headers, credentials: 'include' })
 
   if (res.status === 204) return null
   const text = await res.text()
@@ -35,13 +28,12 @@ async function request(path, options = {}) {
 }
 
 async function uploadFile(file) {
-  const token = getToken()
   const formData = new FormData()
   formData.append('file', file)
   const res = await fetch(`${BASE}/admin/upload`, {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
+    credentials: 'include',
   })
   const text = await res.text()
   let data = null

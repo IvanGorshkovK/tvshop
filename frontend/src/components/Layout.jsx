@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Header from './Header.jsx'
 import Footer from './Footer.jsx'
+import CookieBanner from './CookieBanner.jsx'
 
 export default function Layout() {
   const { pathname } = useLocation()
@@ -56,6 +57,7 @@ export default function Layout() {
         </div>
       </main>
       <Footer />
+      <CookieBanner />
 
       {showTop && (
         <button className="to-top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} title="Наверх">

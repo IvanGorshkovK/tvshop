@@ -17,7 +17,6 @@ export function AuthProvider({ children }) {
 
   function applyAuth(data) {
     const u = { id: data.id, email: data.email, fullName: data.fullName, role: data.role }
-    localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify(u))
     setUser(u)
     return u
@@ -33,8 +32,12 @@ export function AuthProvider({ children }) {
     return applyAuth(data)
   }
 
-  const logout = () => {
-    localStorage.removeItem('token')
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      /* cookie уже могла протухнуть */
+    }
     localStorage.removeItem('user')
     setUser(null)
   }

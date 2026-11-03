@@ -3,6 +3,9 @@ server:
   # Учитывать X-Forwarded-* заголовки (за reverse-proxy Nginx/Caddy)
   forward-headers-strategy: framework
 
+# Куки авторизации (httpOnly): в проде Secure + SameSite=None (кросс-домен Netlify→Render)
+app.cookie.secure: true
+
 logging:
   level:
     root: INFO

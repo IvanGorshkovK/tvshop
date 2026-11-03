@@ -106,9 +106,8 @@ export default function AdminOrders() {
   }
 
   async function exportCsv() {
-    const token = localStorage.getItem('token')
     const res = await fetch(`${API_BASE}/admin/orders/export`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
     })
     if (!res.ok) return
     const blob = await res.blob()
