@@ -65,7 +65,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedCategories() {
-        if (categoryRepository.count() > 0) {
+        if (categoryRepository.findBySlug("televizory").isPresent()) {
             return;
         }
         categoryRepository.save(new Category("Телевизоры", "televizory", "📺"));
@@ -75,7 +75,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedProducts() {
-        if (productRepository.count() > 0) {
+        if (productRepository.findBySlug("samsung-qe55q60c").isPresent()) {
             return;
         }
         Category tvs = categoryRepository.findBySlug("televizory").orElseThrow();
