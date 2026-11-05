@@ -2,7 +2,7 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm@11.7.0 && pnpm install --frozen-lockfile
+RUN npm install -g pnpm@11.7.0 && pnpm install
 COPY . .
 RUN pnpm build
 
